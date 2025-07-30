@@ -1,0 +1,10 @@
+server:
+  addr: "127.0.0.1:8080"
+routes:
+  - name: "service_one"
+    path: "/service-one"
+    destination: "http://httpbin.org/anything"
+  
+  - name: "service_two"
+    path: "/service-two"
+    destination: "http://httpbin.org/anything"
