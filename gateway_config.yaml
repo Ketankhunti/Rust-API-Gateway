@@ -1,21 +1,32 @@
 server:
   addr: "127.0.0.1:8080"
 routes:
-  - name: "service_one"
-    path: "/service-one"
-    destination: "http://httpbin.org/anything"
-  
-  - name: "service_two"
-    path: "/service-two"
-    destination: "http://httpbin.org/anything"
-  
+ 
   - name: "public_service"
     path: "/public"
-    destination: "http://httpbin.org/anything"
+    destination: "https://httpbin.org/anything"
   
-  - name: "private_service"
-    path: "/private"
-    destination: "http://httpbin.org/anything"
+  - name: "admin_service"
+    path: "/jwt/admin"
+    destination: "https://httpbin.org/anything"
     auth:
-      required: true
+      type: "Jwt"
+      roles:
+        - "admin"
+
+  - name: "user_service"
+    path: "/api/user"
+    destination: "https://httpbin.org/anything"
+    auth:
+      type: "ApiKey"
+      roles:
+        - "user"
+  
+  - name: "admin_service"
+    path: "/api/admin"
+    destination: "https://httpbin.org/anything"
+    auth:
+      type: "ApiKey"
+      roles:
+        - "admin"
     

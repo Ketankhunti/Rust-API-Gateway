@@ -16,9 +16,17 @@ pub struct ServerConfig {
     pub addr: String
 }
 
+#[derive(Debug, Deserialize, Clone, PartialEq)]
+pub enum AuthType {
+    Jwt,
+    ApiKey,
+}
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct AuthConfig {
-    pub required: bool,
+    #[serde(rename="type")]
+    pub auth_type: AuthType,
+    pub roles: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, Clone)]
