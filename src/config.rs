@@ -1,13 +1,14 @@
-use std::{fs, path::Path};
+use std::{fs, path::Path, sync::Arc};
 
 use anyhow::Ok;
 use serde::{Deserialize};
+use tokio::sync::RwLock;
 
 
 #[derive(Debug, Deserialize)]
 pub struct GatewayConfig {
     pub server: ServerConfig,
-    pub routes: Vec<RouteConfig>,
+    pub routes: Vec<Arc<RouteConfig>>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -16,10 +17,16 @@ pub struct ServerConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct AuthConfig {
+    pub required: bool,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct RouteConfig {
     pub name: String,
     pub path: String,
     pub destination: String,
+    pub auth: Option<AuthConfig>,
 }
 
 impl GatewayConfig {
@@ -29,10 +36,12 @@ impl GatewayConfig {
         Ok(config)
     }
 
-    pub fn find_route_for_path(&self, request_path: &str) -> Option<&RouteConfig> {
+    pub fn find_route_for_path(&self, request_path: &str) -> Option<Arc<RouteConfig>> {
         self.routes
             .iter()
             .filter(|r| request_path.starts_with(&r.path))
             .max_by_key(|r| r.path.len())
+            .cloned()
+           
     }
 }

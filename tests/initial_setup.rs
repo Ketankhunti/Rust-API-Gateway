@@ -15,7 +15,7 @@ impl Drop for ChildProcessGuard {
 
 #[tokio::test]
 async fn test_gateway_proxy_and_health() -> Result<()> {
-    // 1. Spawn the mock backend server in a separate task.
+    
     println!("Spawning mock backend process...");
     let mock_backend_process = Command::new("cargo")
         .arg("run")
@@ -25,7 +25,6 @@ async fn test_gateway_proxy_and_health() -> Result<()> {
     
     let _backend_guard = ChildProcessGuard(mock_backend_process);
 
-    // 3. Create an HTTP client to send requests.
     let client = reqwest::Client::new();
 
     // 4. Test the /health endpoint.

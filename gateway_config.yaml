@@ -8,3 +8,14 @@ routes:
   - name: "service_two"
     path: "/service-two"
     destination: "http://httpbin.org/anything"
+  
+  - name: "public_service"
+    path: "/public"
+    destination: "http://httpbin.org/anything"
+  
+  - name: "private_service"
+    path: "/private"
+    destination: "http://httpbin.org/anything"
+    auth:
+      required: true
+    

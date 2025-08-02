@@ -21,8 +21,7 @@ pub async fn proxy_handler(
 
     let config_guard = state.config.read().await;
     let matched_route = config_guard
-    .find_route_for_path(&request_path)
-    .cloned(); 
+    .find_route_for_path(&request_path);
 
     let route = match matched_route {
         Some(route) => route,
