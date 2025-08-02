@@ -29,9 +29,11 @@ pub async fn proxy_handler(
         None => return Err(AppError::RouteNotFound),
     };
 
-    let destination_path = request_path.strip_prefix(&route.path).unwrap_or("");
+    // let destination_path = request_path.strip_prefix(&route.path).unwrap_or("");
     
-    let destination_url = format!("{}{}", route.destination, destination_path);
+    let destination_url = format!("{}{}", route.destination, request_path);
+
+    info!("Destination Url: {}", destination_url);
 
     let body_bytes: Bytes = body.collect().await
         .map_err(|e| {
