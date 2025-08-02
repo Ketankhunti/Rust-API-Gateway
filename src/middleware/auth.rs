@@ -15,18 +15,20 @@ pub async fn layer (
     let route = find_route_for_uri(&req.uri(), state.clone()).await?;
 
     if let Some(auth_config) = &route.auth {
-        // 1. verify token
-        let claims = verify_token(req.headers(), auth_config)?;
+        let claims = {
+            // Acquire read lock on the key store for API key checks
+            let key_store_guard = state.key_store.read().await;
+            // Pass all necessary configs to the verification function
+            verify_token(req.headers(), auth_config, &state.secrets, &key_store_guard)?
+        };
 
-        // 2. if route requires specific roles, check them
         if let Some(required_roles) = &auth_config.roles {
             check_roles(&claims.roles, required_roles)?;
         }
 
-        // 3. add claims to request extension so that downstream handlers could potentially access user info
         req.extensions_mut().insert(claims);
     }
-    // if auth succeeds then pass request to the next layer
+
     Ok(next.run(req).await)
 }
 

@@ -13,15 +13,23 @@ use reqwest::Client;
 use tokio::{net::TcpListener, sync::RwLock};
 use tracing::info;
 
-use crate::{config::GatewayConfig, state::AppState};
+use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, state::AppState};
 
-pub async fn run(config: Arc<RwLock<GatewayConfig>>) -> Result<()> {
+pub async fn run(
+    config: Arc<RwLock<GatewayConfig>>,
+    secrets: Arc<SecretsConfig>,
+    key_store: Arc<RwLock<ApiKeyStore>>,
+) -> Result<()> {
+
     let app_state = Arc::new(AppState {
         config: config.clone(),
+        secrets,
+        key_store,
         http_client: Client::new(),
     });
 
     let app = app::create_app(app_state)?;
+
 
     let config_guard = config.read().await;
 

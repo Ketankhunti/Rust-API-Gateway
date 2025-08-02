@@ -2,18 +2,10 @@ use std::collections::HashSet;
 
 use http::HeaderMap;
 use jsonwebtoken::{decode, errors::ErrorKind, DecodingKey, Validation};
-use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{config::{AuthConfig, AuthType}, errors::AppError};
-
-static JWT_SECRET: Lazy<DecodingKey> = Lazy::new(|| {
-    DecodingKey::from_secret("a-string-secret-at-least-256-bits-long".as_ref())
-});
-
-const API_KEY_ADMIN: &str = "admin-secret-key";
-const API_KEY_USER: &str = "user-secret-key";
+use crate::{config::{ApiKeyStore, AuthType, SecretsConfig}, errors::AppError};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Claims {
@@ -22,13 +14,18 @@ pub struct Claims {
     pub exp: usize,  // Required for JWT validation
 }
 
-pub fn verify_token(headers: &HeaderMap, auth_config: &AuthConfig) -> Result<Claims, AppError> {
+pub fn verify_token(
+    headers: &HeaderMap,
+    auth_config: &crate::config::AuthConfig,
+    secrets: &SecretsConfig,
+    key_store: &ApiKeyStore,
+) -> Result<Claims, AppError> {
     
     let token = extract_bearer_token(headers)?;
 
     match auth_config.auth_type {
-        AuthType::Jwt => verify_jwt(token),
-        AuthType::ApiKey => verify_api_key(token),
+        AuthType::Jwt => verify_jwt(token,secrets),
+        AuthType::ApiKey => verify_api_key(token,key_store),
     }
 
 }
@@ -55,35 +52,32 @@ pub fn check_roles(user_roles: &[String], required_roles: &[String]) -> Result<(
 
 // ------- Private Helper Functions  -----
 
-fn verify_jwt(token: &str) -> Result<Claims, AppError> {
+fn verify_jwt(token: &str, secrets: &SecretsConfig) -> Result<Claims, AppError> {
     info!(token);
+    let key = DecodingKey::from_secret(secrets.jwt_secret.as_ref());
     let validation = Validation::new(jsonwebtoken::Algorithm::HS256);
-    let token_data = decode::<Claims>(token, &JWT_SECRET, &validation)
-        .map_err(|err| 
-            match err.kind()  {
-                ErrorKind::ExpiredSignature => AppError::TokenExpired,
-                _ => AppError::AuthFailed("Invalid JWT".to_string()),
-            }
-        )?;
-    info!(token_data.claims.sub);
-    info!("{:#?}", token_data.claims.roles);
-    info!(token_data.claims.exp);
-    Ok(token_data.claims)
+    decode::<Claims>(token, &key, &validation)
+    .map_err(|error| match error.kind() {
+        ErrorKind::ExpiredSignature => AppError::TokenExpired,
+        _ => AppError::AuthFailed("Invalid JWT.".to_string()),
+    })
+    .map(|token_data| token_data.claims)
+    
 }
 
-fn verify_api_key(token: &str) -> Result<Claims,AppError>  {
-    match token  {
-        API_KEY_ADMIN => Ok(
-            Claims { sub: "admin_user".to_string(), 
-            roles: vec!["admin".to_string(), "user".to_string()] , 
-            exp: 0, // Not used for API keys 
-            }
-        ),
-        API_KEY_USER => Ok(Claims {
-            sub: "normal_user".to_string(),
-            roles: vec!["user".to_string()],
-            exp: 0,
-        }),
-        _ => Err(AppError::AuthFailed("Invalid API Key".to_string()))
+fn verify_api_key(token: &str, key_store: &ApiKeyStore) -> Result<Claims,AppError>  {
+    let details = key_store
+        .keys
+        .get(token)
+        .ok_or_else(|| AppError::AuthFailed("Invalid API Key.".to_string()))?;
+
+    if details.status != "active" {
+        return Err(AppError::AuthFailed("API Key is revoked.".to_string()));
     }
+
+    Ok(Claims {
+        sub: details.user_id.clone(),
+        roles: details.roles.clone(),
+        exp: 0, // Not applicable for API keys
+    })
 }

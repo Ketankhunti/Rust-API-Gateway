@@ -1,0 +1,15 @@
+keys:
+  "user-key-for-alice":
+    user_id: "alice@example.com"
+    roles: ["user"]
+    status: "active"
+
+  "admin-key-for-carol":
+    user_id: "carol@example.com"
+    roles: ["admin"]
+    status: "active"
+
+  "revoked-key-for-dave":
+    user_id: "dave@example.com"
+    roles: ["user"]
+    status: "revoked"
