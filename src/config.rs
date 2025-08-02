@@ -28,4 +28,11 @@ impl GatewayConfig {
         let config: GatewayConfig = serde_yaml::from_str(&content)?;
         Ok(config)
     }
+
+    pub fn find_route_for_path(&self, request_path: &str) -> Option<&RouteConfig> {
+        self.routes
+            .iter()
+            .filter(|r| request_path.starts_with(&r.path))
+            .max_by_key(|r| r.path.len())
+    }
 }

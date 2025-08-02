@@ -1,28 +1,33 @@
 use std::sync::Arc;
 
 use anyhow::Ok;
-use rust_api_gateway::{app, config::GatewayConfig};
+use reqwest::Client;
+use rust_api_gateway::{app, config::GatewayConfig, state::AppState};
 use tokio::net::{TcpListener};
-use tracing::info;
+use tracing::{info, Level};
+use tokio::sync::RwLock;
 
 #[tokio::main]
 async fn main() -> Result<(), anyhow::Error> {
     tracing_subscriber::fmt()
-    .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+    .with_max_level(Level::INFO)
     .init();
 
-    eprintln!("Loading configuration from gateway_config.yaml...");
-    let config = Arc::new(GatewayConfig::load("gateway_config.yaml")?);
-    eprintln!("Configuration loaded successfully.");
-    
-    let app = app::create_app(config.clone()).await?;
-    eprintln!("Application router created.");
+    info!("Loading configuration from gateway_config.yaml...");
+    let config = Arc::new(RwLock::new(GatewayConfig::load("gateway_config.yaml")?));
+    info!("Configuration loaded successfully.");
 
-    let listener = TcpListener::bind(&config.server.addr).await?;
-    eprintln!("Server listeninng on {}",&config.server.addr);
+    let app_state = Arc::new(AppState {
+        config: config.clone(),
+        http_client: Client::new(),
+    });
+
+    let app = app::create_app(app_state.clone())?;
+    info!("Application router created.");
+
+    let listener = TcpListener::bind(&config.read().await.server.addr).await?;
+    info!("Server listening on {}", &config.read().await.server.addr);
     axum::serve(listener, app.into_make_service()).await?;
 
     Ok(())
-
-
 }
