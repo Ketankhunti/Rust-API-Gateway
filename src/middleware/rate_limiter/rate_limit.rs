@@ -1,4 +1,4 @@
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 
 use axum::{extract::{Request, State}, middleware::Next, response::Response};
 use axum_client_ip::ClientIp;
@@ -41,7 +41,7 @@ pub async fn layer(
     Ok(next.run(req).await)
 }
 
-fn parse_duration(s: &str) -> Result<Duration, &'static str> {
+pub fn parse_duration(s: &str) -> Result<Duration, &'static str> {
     let s = s.trim();
     let unit = s.chars().last().ok_or("Empty durtion")?;
     let value: u64 = s[..s.len()-1]

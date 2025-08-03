@@ -9,6 +9,9 @@ routes:
   - name: "public_service"
     path: "/api/public"
     destination: "https://httpbin.org/anything"
+    # This route's responses will be cached for 30 seconds.
+    cache:
+      ttl: "10s"
 
   - name: "admin_service"
     path: "/api/admin"

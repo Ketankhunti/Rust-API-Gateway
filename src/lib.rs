@@ -7,15 +7,17 @@ pub mod middleware;
 pub mod features;
 pub mod utils;
 
-use std::{net::SocketAddr, path::PathBuf, sync::Arc};
+use std::{net::SocketAddr, path::PathBuf, sync::Arc, time::Duration};
 
 use anyhow::Result;
 use dotenvy::dotenv;
+use moka::future::Cache;
 use reqwest::Client;
 use tokio::{net::TcpListener, sync::RwLock};
 use tracing::{info, Level};
 
-use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::rate_limiter::state::InMemoryRateLimitState, state::AppState, utils::{config_path::Cli, hot_reload}};
+use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::rate_limiter::state::InMemoryRateLimitState, utils::{hot_reload}};
+use crate::state::{AppState, CachedResponse};
 
 pub async fn run(
     config_path: PathBuf,
@@ -43,12 +45,18 @@ pub async fn run(
 
     let key_store = Arc::new(RwLock::new(ApiKeyStore::load(&key_store_path)?));
 
+    let cache: Arc<Cache<String, Arc<CachedResponse>>> = Arc::new(
+        Cache::builder()
+            .max_capacity(10_000) // Default 5 minute TTL
+            .build(),
+    );
 
     let app_state = Arc::new(AppState {
         config: config.clone(),
         secrets,
         key_store: key_store.clone(),
         rate_limit_store: Arc::new(InMemoryRateLimitState::new()),
+        cache: cache,
         http_client: Client::new(),
     });
 

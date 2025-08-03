@@ -26,6 +26,7 @@ async-trait = "0.1.88"
 futures = "0.3.31"
 notify = "8.1.0"
 clap = {version = "4.5.42", features = ["derive"]}
+moka = { version = "0.12.10", features = ["future"] }
 
 [lib]
 name = "api_gateway"

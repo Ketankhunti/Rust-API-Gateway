@@ -46,7 +46,8 @@ pub struct RouteConfig {
     pub path: String,
     pub destination: String,
     pub auth: Option<AuthConfig>,
-    pub rate_limit: Option<RateLimitConfig>
+    pub rate_limit: Option<RateLimitConfig>,
+    pub cache: Option<CacheConfig>,
 }
 
 impl GatewayConfig {
@@ -105,4 +106,11 @@ impl SecretsConfig {
                 .map_err(|_| anyhow::anyhow!("JWT_SECRET must be set in .env file"))?,
         })
     }
+}
+
+
+// ----- Cache config  ----
+#[derive(Debug, Deserialize, Clone)]
+pub struct CacheConfig {
+    pub ttl: String  // 30s , 1m
 }
