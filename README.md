@@ -1,56 +1,59 @@
-Rust API Gateway
+# Rust API Gateway
+
+![Architecture Diagram](docs/architecture.png)
+
 A minimal, high-performance, and self-hosted API Gateway built in Rust. This project provides a lightweight yet powerful solution for managing access to your backend services, perfect for solo developers and small teams.
 
-![Alt Text]("C:\Users\khunt\Downloads\Gemini_Generated_Image_eg1fcqeg1fcqeg1f.png")
+---
 
-✨ Features
-Dynamic Routing: Configure all routes via a simple YAML file. No code changes or restarts needed to add, remove, or change routes.
+## ✨ Features
 
-Reverse Proxy: Forwards client requests to the appropriate backend services seamlessly.
+- **Dynamic Routing**  
+  Configure all routes via a simple YAML file. No code changes or restarts needed to add, remove, or change routes.
 
-Robust Authentication:
+- **Reverse Proxy**  
+  Forwards client requests to the appropriate backend services seamlessly.
 
-JWT (JSON Web Tokens): Secure stateless authentication for users.
+- **Robust Authentication**  
+  - **JWT (JSON Web Tokens):** Secure stateless authentication for users.  
+  - **API Keys:** Simple, effective authentication for server-to-server communication.  
+  - **Role-Based Access Control (RBAC):** Restrict access to specific routes based on roles defined in the JWT or API key data.
 
-API Keys: Simple, effective authentication for server-to-server communication.
+- **Rate Limiting**  
+  Protect your services from abuse with a configurable Token Bucket algorithm, applied per client IP address.
 
-Role-Based Access Control (RBAC): Restrict access to specific routes based on roles defined in the JWT or API key data.
+- **Configuration Hot-Reload**  
+  Automatically detects and applies changes to `gateway_config.yaml` and `api_keys.yaml` without any downtime.
 
-Rate Limiting: Protect your services from abuse with a configurable Token Bucket algorithm, applied per client IP address.
+- **CLI-Driven**  
+  Easy to run and configure via command-line arguments.
 
-Configuration Hot-Reload: Automatically detects and applies changes to gateway_config.yaml and api_keys.yaml without any downtime.
+---
 
-CLI-Driven: Easy to run and configure via command-line arguments.
+## 🚀 Getting Started
 
-🚀 Getting Started
-Prerequisites
-Rust toolchain (latest stable version recommended).
+### Prerequisites
 
-Installation
+- Rust toolchain (latest stable version recommended)
+
+### Installation
+
 You can run the project directly from the source or install it as a command-line application.
 
+```bash
 # To run directly from source
 cargo run
 
 # To install the binary
 cargo install --path .
 
-⚙️ Configuration
-The gateway is configured using three main files.
-
-1. Environment Variables (.env)
-This file holds the master secret for the entire gateway and should never be committed to version control.
-
-.env
+# .env
 
 # The master secret for signing and verifying all JWTs.
 # Use a long, random string for production.
 JWT_SECRET="a-very-long-and-random-string-that-is-hard-to-guess"
 
-2. API Key Store (api_keys.yaml)
-This file manages all valid API keys and their associated user data and roles.
-
-api_keys.yaml
+# api_keys.yaml
 
 keys:
   "user-key-for-alice":
@@ -68,10 +71,7 @@ keys:
     roles: ["user"]
     status: "revoked" # Keys can be easily revoked
 
-3. Main Gateway Config (gateway_config.yaml)
-This is the central configuration file that defines the server, routes, and authentication requirements.
-
-gateway_config.yaml
+# gateway_config.yaml
 
 # Main server configuration
 server:
@@ -107,24 +107,11 @@ routes:
       type: "jwt"
       roles: ["admin"]
 
-▶️ Running the Gateway
-You can run the gateway using the cargo run command.
-
-Default:
-Looks for gateway_config.yaml in the current directory.
-
 cargo run
 
-With a Custom Config File:
-The -- separates arguments for cargo from arguments for your application.
-
 cargo run -- --config /path/to/your/custom_config.yaml
-OR
+# OR
 cargo run -- -c /path/to/your/custom_config.yaml
-
-
-🧪 Testing
-The project includes a comprehensive integration test suite.
 
 # Run all tests
 cargo test
