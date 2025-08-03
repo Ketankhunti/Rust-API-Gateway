@@ -1,6 +1,6 @@
 # Rust API Gateway
 
-![Architecture Diagram](docs/architecture.png)
+![Architecture Diagram](C:\Users\khunt\Downloads\Gemini_Generated_Image_eg1fcqeg1fcqeg1f.png)
 
 A minimal, high-performance, and self-hosted API Gateway built in Rust. This project provides a lightweight yet powerful solution for managing access to your backend services, perfect for solo developers and small teams.
 
