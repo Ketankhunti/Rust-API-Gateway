@@ -31,5 +31,5 @@ routes:
       "type": "ApiKey"
       "roles": ["user"]
     rate_limit:
-      requests: 5
+      requests: 10
       period: "1m"
