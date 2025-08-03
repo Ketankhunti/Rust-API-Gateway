@@ -47,14 +47,21 @@ cargo run
 # To install the binary
 cargo install --path .
 
+⚙️ Configuration
+The gateway is configured using three main files:
+
+1. Environment Variables (.env)
+This file holds the master secret for the entire gateway and should never be committed to version control.
+
 # .env
 
 # The master secret for signing and verifying all JWTs.
 # Use a long, random string for production.
 JWT_SECRET="a-very-long-and-random-string-that-is-hard-to-guess"
 
+2. API Key Store (api_keys.yaml)
+This file manages all valid API keys and their associated user data and roles.
 # api_keys.yaml
-
 keys:
   "user-key-for-alice":
     user_id: "alice@example.com"
@@ -71,7 +78,8 @@ keys:
     roles: ["user"]
     status: "revoked" # Keys can be easily revoked
 
-# gateway_config.yaml
+3. Main Gateway Config (gateway_config.yaml)
+This is the central configuration file that defines the server, routes, and authentication requirements.
 
 # Main server configuration
 server:
@@ -107,11 +115,18 @@ routes:
       type: "jwt"
       roles: ["admin"]
 
+▶️ Running the Gateway
+
+Default (uses gateway_config.yaml in the current directory)
 cargo run
 
+With a Custom Config File
 cargo run -- --config /path/to/your/custom_config.yaml
 # OR
 cargo run -- -c /path/to/your/custom_config.yaml
+
+🧪 Testing
+The project includes a comprehensive integration test suite.
 
 # Run all tests
 cargo test
