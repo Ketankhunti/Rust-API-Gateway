@@ -3,6 +3,8 @@ use reqwest::Error;
 
 #[derive(Debug)]
 pub enum AppError {
+    RateLimited,
+
     // Auth errors
     AuthFailed(String),
     MissingAuthToken,
@@ -20,6 +22,10 @@ pub enum AppError {
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
         let (status, error_message) = match self {
+            AppError::RateLimited => (
+                StatusCode::TOO_MANY_REQUESTS,
+                "Too many requests".to_string(),
+            ),
             AppError::AuthFailed(reason) => (StatusCode::UNAUTHORIZED, format!("Authentication failed: {}", reason)),
             AppError::MissingAuthToken => (StatusCode::UNAUTHORIZED, "Missing 'Authorization' header".to_string()),
             AppError::InvalidAuthHeader => (StatusCode::UNAUTHORIZED, "Invalid 'Authorization' header format. Expected 'Bearer <token>'.".to_string()),

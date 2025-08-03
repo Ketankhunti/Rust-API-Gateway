@@ -6,14 +6,16 @@ pub mod proxy;
 pub mod middleware;
 pub mod features;
 
-use std::sync::Arc;
+use std::{net::{IpAddr, SocketAddr}, sync::Arc};
 
 use anyhow::Result;
+use axum::ServiceExt;
+use axum_client_ip::ClientIp;
 use reqwest::Client;
 use tokio::{net::TcpListener, sync::RwLock};
 use tracing::info;
 
-use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, state::AppState};
+use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::rate_limiter::state::InMemoryRateLimitState, state::AppState};
 
 pub async fn run(
     config: Arc<RwLock<GatewayConfig>>,
@@ -25,6 +27,7 @@ pub async fn run(
         config: config.clone(),
         secrets,
         key_store,
+        rate_limit_store: Arc::new(InMemoryRateLimitState::new()),
         http_client: Client::new(),
     });
 
@@ -37,7 +40,7 @@ pub async fn run(
 
     let listener = TcpListener::bind(&addr).await?;
     info!("Gateway listening on {}", &addr);
-    axum::serve(listener, app.into_make_service()).await?;
+    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await?;
 
     Ok(())
 }

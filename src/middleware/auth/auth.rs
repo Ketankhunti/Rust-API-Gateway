@@ -1,9 +1,10 @@
 use std::{ops::Deref, sync::Arc};
 
 use axum::{extract::{Request, State}, middleware::Next, response::Response};
+use axum_client_ip::ClientIp;
 use http::Uri;
 
-use crate::{config::RouteConfig, errors::AppError, features::auth::{check_roles, verify_token}, state::AppState};
+use crate::{config::RouteConfig, errors::AppError, features::auth::auth::{check_roles, verify_token}, state::AppState};
 
 // axum middleware layer for authentication
 pub async fn layer (

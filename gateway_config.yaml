@@ -23,3 +23,13 @@ routes:
     auth:
       type: "ApiKey"
       roles: ["user"] # Requires an API key with the 'user' role
+
+  - name: "rate_service"
+    path: "/api/ratelimit"
+    destination: "https://httpbin.org/anything"
+    auth:
+      "type": "ApiKey"
+      "roles": ["user"]
+    rate_limit:
+      requests: 5
+      period: "1m"

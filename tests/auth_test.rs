@@ -17,7 +17,7 @@ async fn test_gateway_proxy_and_auth() -> Result<(),Box<dyn Error>> {
     println!("Spawning mock backend process...");
     let mock_backend_process = Command::new("cargo")
         .arg("run")
-        .arg("--example")
+        .arg("--bin")
         .arg("server")
         .spawn()?;
     

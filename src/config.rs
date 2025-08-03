@@ -35,11 +35,18 @@ pub struct AuthConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct RateLimitConfig{
+    pub requests: u64,
+    pub period: String
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct RouteConfig {
     pub name: String,
     pub path: String,
     pub destination: String,
     pub auth: Option<AuthConfig>,
+    pub rate_limit: Option<RateLimitConfig>
 }
 
 impl GatewayConfig {
