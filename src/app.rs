@@ -1,11 +1,15 @@
-use std::{net::IpAddr, sync::Arc};
+use std::{sync::Arc};
 
 use anyhow::Error;
-use axum::{extract::State, middleware::from_fn_with_state, response::{IntoResponse, Response}, routing::{any, get}, Router};
+use axum::{extract::{Request, State}, middleware::{from_fn, from_fn_with_state}, routing::{any, get}, Router};
 use http::StatusCode;
 use axum_client_ip::{ClientIpSource};
+use tower_http::{trace::TraceLayer};
+use uuid::Uuid;
 
-use crate::{middleware::{auth::auth::layer as auth_layer, cache::cache::layer as cache_layer, rate_limiter::rate_limit::layer as ratelimiter_layer}, proxy::proxy_handler, state::AppState};
+use crate::{middleware::{auth::auth::layer as auth_layer, cache::cache::layer as cache_layer, rate_limiter::rate_limit::layer as ratelimiter_layer, request_id::request_id::layer as request_id_layer}, proxy::proxy_handler, state::AppState};
+
+pub const REQUEST_ID_HEADER: &str = "x-request-id";
 
 async fn metrics_handler(state: State<Arc<AppState>>) -> String {
     state.prometheus_handle.as_ref().unwrap().render()
@@ -30,6 +34,24 @@ pub fn create_app(state: Arc<AppState>) -> Result<Router,Error> {
         .with_state(state)
         .layer(ClientIpSource::ConnectInfo.into_extension());
  
+    Ok(router
+        .layer(
+        TraceLayer::new_for_http().make_span_with(|request:&Request<_>| {
+            let uuid = Uuid::new_v4().to_string();
+            let request_id = request
+                    .headers()
+                    .get(REQUEST_ID_HEADER)
+                    .and_then(|value| value.to_str().ok())
+                    .unwrap_or_else(|| uuid.as_str());
 
-    Ok(router)
+            tracing::error_span!(
+                    "request",
+                    id = %request_id,
+                    method = %request.method(),
+                    uri = %request.uri(),
+            )
+        })   
+        )
+        .layer(from_fn(request_id_layer))
+    )
 }

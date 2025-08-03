@@ -1,18 +1,19 @@
-use axum::{body::Body, extract::{Path, State}, http::{HeaderMap, Request, Uri}, response::{IntoResponse, Response}};
-use http::Method;
+use axum::{body::Body, extract::{Path, State}, http::HeaderMap, response::Response, Extension};
+use http::{HeaderValue, Method};
 use tracing::info;
 use http_body_util::BodyExt;
 use bytes::Bytes;
 use std::sync::Arc;
 
-use crate::{errors::AppError, state::AppState};
+use crate::{app::REQUEST_ID_HEADER, errors::AppError, state::AppState};
 
 #[axum::debug_handler]
 pub async fn proxy_handler(
     State(state): State<Arc<AppState>>,
+    Extension(request_id): Extension<Arc<String>>,
     Path(path): Path<String>,
     method: Method,
-    headers: HeaderMap,
+    mut headers: HeaderMap,
     body: Body,
 ) -> Result<Response, AppError> {
 
@@ -32,7 +33,12 @@ pub async fn proxy_handler(
     
     let destination_url = format!("{}{}", route.destination, request_path);
 
-    info!("Destination Url: {}", destination_url);
+    info!(destination = %destination_url, "Forwarding request to backend");
+    
+    headers.insert(
+        REQUEST_ID_HEADER,
+        HeaderValue::from_str(&request_id).unwrap(),
+    );
 
     let body_bytes: Bytes = body.collect().await
         .map_err(|e| {
@@ -52,6 +58,7 @@ pub async fn proxy_handler(
         })?;
 
         let response = state.http_client.execute(request).await?;
+        
 
         let status = response.status();
         let headers = response.headers().clone();
@@ -63,8 +70,11 @@ pub async fn proxy_handler(
             response_builder = response_builder.header(name, value);
         }
 
-        let response = response_builder.body(body).unwrap();
-
+        let mut response = response_builder.body(body).unwrap();
+        response.headers_mut().insert(
+            REQUEST_ID_HEADER,
+            HeaderValue::from_str(&request_id).unwrap(),
+        );
         Ok(response)    
         
 
