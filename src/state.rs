@@ -1,4 +1,5 @@
 use std::{sync::Arc, time::Instant};
+use axum_prometheus::metrics_exporter_prometheus::PrometheusHandle;
 use bytes::Bytes;
 use http::{HeaderMap, StatusCode};
 use moka::future::Cache;
@@ -22,4 +23,5 @@ pub struct AppState {
     pub rate_limit_store: Arc<dyn RateLimitState>,
     pub cache: Arc<Cache<String,Arc<CachedResponse>>>,
     pub http_client: Client,
+    pub prometheus_handle: Option<PrometheusHandle>,
 }

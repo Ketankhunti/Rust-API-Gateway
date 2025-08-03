@@ -10,13 +10,14 @@ pub mod utils;
 use std::{net::SocketAddr, path::PathBuf, sync::Arc, time::Duration};
 
 use anyhow::Result;
+use axum_prometheus::{PrometheusMetricLayer, PrometheusMetricLayerBuilder};
 use dotenvy::dotenv;
 use moka::future::Cache;
 use reqwest::Client;
 use tokio::{net::TcpListener, sync::RwLock};
 use tracing::{info, Level};
 
-use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::rate_limiter::state::InMemoryRateLimitState, utils::{hot_reload}};
+use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::rate_limiter::state::{InMemoryRateLimitState, RateLimitState}, utils::hot_reload};
 use crate::state::{AppState, CachedResponse};
 
 pub async fn run(
@@ -51,13 +52,28 @@ pub async fn run(
             .build(),
     );
 
+    let rate_limit_store: Arc<dyn RateLimitState> = Arc::new(InMemoryRateLimitState::new());
+
+    let (prometheus_layer, prometheus_handle) = {
+        let config_guard = config.read().await;
+        if config_guard.observability.metrics.enabled{
+            info!("Metrics reporting is enabled");
+            let (layer,handle)= PrometheusMetricLayer::pair();
+            (Some(layer), Some(handle))
+        }else{
+            (None, None)
+        }
+    };
+
+
     let app_state = Arc::new(AppState {
         config: config.clone(),
         secrets,
         key_store: key_store.clone(),
-        rate_limit_store: Arc::new(InMemoryRateLimitState::new()),
+        rate_limit_store: rate_limit_store,
         cache: cache,
         http_client: Client::new(),
+        prometheus_handle,
     });
 
     // start hot reloader
@@ -67,7 +83,11 @@ pub async fn run(
         key_store.clone(), // Clone for the watcher task
     ));
 
-    let app = app::create_app(app_state)?;
+    let mut app = app::create_app(app_state)?;
+
+    if let Some(layer) = prometheus_layer {
+        app = app.layer(layer);
+    }
 
     let config_guard = config.read().await;
 

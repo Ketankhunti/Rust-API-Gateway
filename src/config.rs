@@ -8,6 +8,8 @@ use serde::{Deserialize};
 pub struct GatewayConfig {
     pub server: ServerConfig,
     pub routes: Vec<Arc<RouteConfig>>,
+    #[serde(default)]
+    pub observability: ObservabilityConfig,
     pub identity: IdentityConfig,
 }
 
@@ -114,3 +116,19 @@ impl SecretsConfig {
 pub struct CacheConfig {
     pub ttl: String  // 30s , 1m
 }
+
+
+//------  Observability config ---------
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct ObservabilityConfig {
+    #[serde(default)] // Makes the metrics block optional
+    pub metrics: MetricsConfig,
+}
+
+#[derive(Debug, Deserialize, Clone, Default)]
+pub struct MetricsConfig {
+    #[serde(default)] // Defaults to false if not specified
+    pub enabled: bool,
+}
+

@@ -1,7 +1,11 @@
 server:
   addr: "127.0.0.1:8080"
 
-# New section to define identity sources
+
+observability:
+  metrics:
+    enabled: true
+
 identity:
   api_key_store_path: "./api_keys.yaml"
 
