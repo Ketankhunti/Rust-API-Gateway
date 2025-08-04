@@ -1,5 +1,5 @@
-use api_gateway::{utils::config_path::Cli};
-use api_gateway::run;
+use rustway::{utils::config_path::Cli};
+use rustway::run;
 
 use clap::Parser;
 

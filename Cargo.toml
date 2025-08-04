@@ -32,7 +32,7 @@ uuid = "1.17.0"
 tower-http ={ version="0.6.6", features = ["trace", "propagate-header"]}
 
 [lib]
-name = "api_gateway"
+name = "rustway"
 path = "src/lib.rs"
 
 [[bin]]
@@ -44,8 +44,8 @@ name = "server"
 path = "examples/server.rs"
 
 [[bin]]
-name = "cb_server"
-path = "examples/circuit_breaker_test_server.rs"
+name = "test_server"
+path = "examples/test_server.rs"
 
 [[test]]
 name = "rate_limit"

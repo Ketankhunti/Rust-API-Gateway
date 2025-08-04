@@ -1,45 +1,57 @@
+
 server:
-  addr: "127.0.0.1:8080"
+  addr: "127.0.0.1:8081" # Use a dedicated port for testing
 
 observability:
   metrics:
     enabled: true
+    auth_required: false # Disabled for easier testing in CI
 
 identity:
   api_key_store_path: "./api_keys.yaml"
 
 routes:
-  - name: "public_service"
-    path: "/api/public"
-    destination: "https://httpbin.org/anything"
-    # This route's responses will be cached for 30 seconds.
-    cache:
-      ttl: "10s"
+  # 1. A simple public route
+  - name: "public_route"
+    path: "/test/public"
+    destination: "http://127.0.0.1:8000/public"
 
-  - name: "admin_service"
-    path: "/api/admin"
-    destination: "https://httpbin.org/anything"
+  # 2. A route for testing API Key auth
+  - name: "apikey_route"
+    path: "/test/apikey"
+    destination: "http://127.0.0.1:8000/private"
+    auth:
+      type: "ApiKey"
+      roles: ["user"]
+
+  # 3. A route for testing JWT auth
+  - name: "jwt_route"
+    path: "/test/jwt"
+    destination: "http://127.0.0.1:8000/private"
     auth:
       type: "Jwt"
-      roles: ["admin"] # Requires a JWT with the 'admin' role
+      roles: ["admin"]
 
-  - name: "resilient_service"
-    path: "/api/resilient"
-    destination: "http://127.0.0.1:8001/service"
+  # 4. A route for testing rate limiting
+  - name: "ratelimit_route"
+    path: "/test/ratelimit"
+    destination: "http://127.0.0.1:8000/public"
     rate_limit:
-      requests: 20
+      requests: 3
       period: "1m"
+
+  # 5. A route for testing caching
+  - name: "cache_route"
+    path: "/test/cache"
+    destination: "http://127.0.0.1:8000/cacheable"
+    cache:
+      ttl: "5s" # Short TTL for easy testing
+
+  # 6. A route for testing the circuit breaker
+  - name: "circuitbreaker_route"
+    path: "/test/breaker"
+    destination: "http://127.0.0.1:8000/failing"
     circuit_breaker:
-      failure_threshold: 3
-      success_threshold: 3
-      open_duration: "10s"  
-
-  - name: "rate_service"
-    path: "/api/ratelimit"
-    destination: "https://httpbin.org/anything"
-    auth:
-      "type": "ApiKey"
-      "roles": ["user"]
-    rate_limit:
-      requests: 10
-      period: "1m"
+      failure_threshold: 2
+      success_threshold: 2
+      open_duration: "5s" # Short duration for easy testing
