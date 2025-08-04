@@ -1,7 +1,6 @@
 server:
   addr: "127.0.0.1:8080"
 
-
 observability:
   metrics:
     enabled: true
@@ -24,12 +23,16 @@ routes:
       type: "Jwt"
       roles: ["admin"] # Requires a JWT with the 'admin' role
 
-  - name: "user_service"
-    path: "/api/user"
-    destination: "https://httpbin.org/anything"
-    auth:
-      type: "ApiKey"
-      roles: ["user"] # Requires an API key with the 'user' role
+  - name: "resilient_service"
+    path: "/api/resilient"
+    destination: "http://127.0.0.1:8001/service"
+    rate_limit:
+      requests: 20
+      period: "1m"
+    circuit_breaker:
+      failure_threshold: 3
+      success_threshold: 3
+      open_duration: "10s"  
 
   - name: "rate_service"
     path: "/api/ratelimit"

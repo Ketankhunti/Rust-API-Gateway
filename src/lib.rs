@@ -8,17 +8,17 @@ pub mod features;
 pub mod utils;
 
 
-use std::{net::SocketAddr, path::PathBuf, sync::Arc, time::Duration};
+use std::{net::SocketAddr, path::PathBuf, sync::Arc,};
 
 use anyhow::Result;
-use axum_prometheus::{PrometheusMetricLayer, PrometheusMetricLayerBuilder};
+use axum_prometheus::{PrometheusMetricLayer};
 use dotenvy::dotenv;
 use moka::future::Cache;
 use reqwest::Client;
 use tokio::{net::TcpListener, sync::RwLock};
 use tracing::{info, Level};
 
-use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::rate_limiter::state::{InMemoryRateLimitState, RateLimitState}, utils::hot_reload};
+use crate::{config::{ApiKeyStore, GatewayConfig, SecretsConfig}, features::{circuit_breaker::circuit_breaker::CircuitBreakerStore, rate_limiter::state::{InMemoryRateLimitState, RateLimitState}}, utils::hot_reload};
 use crate::state::{AppState, CachedResponse};
 
 pub async fn run(
@@ -66,6 +66,9 @@ pub async fn run(
         }
     };
 
+    let circuit_breaker_store = Arc::new(
+        CircuitBreakerStore::new(),
+    );
 
     let app_state = Arc::new(AppState {
         config: config.clone(),
@@ -75,6 +78,7 @@ pub async fn run(
         cache: cache,
         http_client: Client::new(),
         prometheus_handle,
+        circuit_breaker_store,
     });
 
     // start hot reloader

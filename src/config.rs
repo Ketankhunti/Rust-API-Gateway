@@ -3,6 +3,8 @@ use std::{collections::HashMap, fs, path::Path, sync::Arc};
 use anyhow::{Error, Ok};
 use serde::{Deserialize};
 
+use crate::features::circuit_breaker::circuit_breaker::CircuitBreakerStore;
+
 
 #[derive(Debug, Deserialize)]
 pub struct GatewayConfig {
@@ -50,6 +52,7 @@ pub struct RouteConfig {
     pub auth: Option<AuthConfig>,
     pub rate_limit: Option<RateLimitConfig>,
     pub cache: Option<CacheConfig>,
+    pub circuit_breaker: Option<CircuitBreakerConfig>,
 }
 
 impl GatewayConfig {
@@ -132,3 +135,12 @@ pub struct MetricsConfig {
     pub enabled: bool,
 }
 
+
+//      ---- Circuit Breaker 
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct CircuitBreakerConfig {
+    pub failure_threshold: u32,
+    pub success_threshold: u32,
+    pub open_duration: String,
+}

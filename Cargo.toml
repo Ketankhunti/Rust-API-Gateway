@@ -43,6 +43,10 @@ path = "src/main.rs"
 name = "server"
 path = "examples/server.rs"
 
+[[bin]]
+name = "cb_server"
+path = "examples/circuit_breaker_test_server.rs"
+
 [[test]]
 name = "rate_limit"
 path = "tests/rate_limit.rs"

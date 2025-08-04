@@ -4,6 +4,7 @@ use reqwest::Error;
 #[derive(Debug)]
 pub enum AppError {
     RateLimited,
+    ServiceUnavailable,
 
     // Auth errors
     AuthFailed(String),
@@ -47,6 +48,12 @@ impl IntoResponse for AppError {
                 StatusCode::INTERNAL_SERVER_ERROR,
                 "An internal server error occurred".to_string(),
             ),
+            AppError::ServiceUnavailable => {
+                (
+                    StatusCode::SERVICE_UNAVAILABLE,
+                    "Service Unavailable".to_string()
+                )
+            }
         };
 
         (status, error_message).into_response()
